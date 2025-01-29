@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// Defining Database Models
+
+// User Model
+
+model User {
+  id          Int     @id @default(autoincrement())
+  name        String
+  email       String  @unique
+  password    String
+  role        String    @default("customer")
+  carts       Cart[]
+  orders      Order[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+
+// Product Model
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  price       Float
+  imageUrl    String
+  stock       Int
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Order Model  
+model Order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user      User        @relation(fields: [userId], references: [id])
+  items      OrderItem[]
+  total      Float
+  status     String      @default("pending")
+  payment    Payment?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+// Cart Model
+model Cart {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user      User        @relation(fields: [userId], references: [id])
+  items      CartItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+// Payment Model
+model Payment {
+  id        Int         @id @default(autoincrement())
+  orderId   Int         @unique
+  order     Order       @relation(fields: [orderId], references: [id])
+  amount    Float
+  status    String      @default("pending")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+// CartItem Model
+model CartItem {
+  id         Int      @id @default(autoincrement())
+  cartId     Int
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// OdereItem Model
+model OrderItem {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  order      Order    @relation(fields: [orderId], references: [id])
+  productId  Int
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  price      Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
