@@ -108,7 +108,7 @@ router.post("/", async (req: Request, res: Response) => {
     }
   });
 
-  // Delete a user
+  // Delete a user by id
   router.delete("/:id", async (req: Request, res: Response) => {
     try {
       console.log("Deleting user...");
@@ -121,6 +121,19 @@ router.post("/", async (req: Request, res: Response) => {
     } catch (error) {
       console.error("Error deleting user...", error);
       res.status(500).json({ error: "Failed to delete user." });
+    }
+  });
+
+  // Delete all users
+  router.delete("/", async (req: Request, res: Response) => {
+    try {
+      console.log("Deleting all users...");
+      const users = await prisma.user.deleteMany();
+      console.log("Deleted all users.", users);
+      res.json(users);
+    } catch (error) {
+      console.error("Error deleting users...", error);
+      res.status(500).json({ error: "Failed to delete users." });
     }
   });
 

@@ -1,11 +1,21 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const router = express.Router();
 
+interface ProductRequest {
+  name: string;
+  price: number;
+  description: string;
+  imageUrl: string;
+  stock: number;
+}
+
+type ProductRequestType = Request<{}, any, ProductRequest>;
+
 // Get all products
-router.get('/', async (req, res) => {
+router.get('/', async (req: Request, res: Response) => {
   try {
     console.log('Fetching all products...');
     const products = await prisma.product.findMany();
@@ -17,12 +27,45 @@ router.get('/', async (req, res) => {
 });
 
 // Create New Product
-router.post('/', async (req, res) => {
+router.post( '/', async (req: Request<{}, any, ProductRequest>, res: Response ) => {
   try {
-    console.log('Creating a new product...');
+    console.log('Creating a new product...', req.body);
     const { name, price, description, imageUrl, stock } = req.body;
+
+    // Validating the required fields
+    if (!name || !price || !description || !imageUrl || stock === undefined) {
+        res.status(400).json({ 
+        error: 'Missing required fields',
+        required: ['name', 'price', 'description', 'imageUrl', 'stock'],
+        received: req.body 
+      });
+      return;
+    }
+
+    // Validating data types
+    if (typeof price !== 'number' || typeof stock !== 'number') {
+        res.status(400).json({
+        error: 'Invalid data types',
+        expected: {
+          price: 'float',
+          stock: 'number'
+        },
+        received: {
+          price: typeof price,
+          stock: typeof stock
+        }
+      });
+      return;
+    }
+
     const product = await prisma.product.create({
-        data: {name, price, description, imageUrl, stock},
+        data: {
+          name,
+          price,
+          description,
+          imageUrl,
+          stock
+        },
     });
     res.status(201).json(product);
   } catch (error) {
@@ -32,7 +75,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get a product by id
-router.get('/:id', async (req, res) => {
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     console.log('Fetching product by id...');
     const { id } = req.params;
@@ -47,7 +90,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update entire product by id
-router.put('/:id', async (req, res) => {
+router.put('/:id', async (req: Request, res: Response) => {
   try {
     console.log('Updating product...');
     const { id } = req.params;
@@ -64,7 +107,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Update specific product details by id
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', async (req: Request, res: Response) => {
   try {
     console.log('Updating product...');
     const { id } = req.params;
@@ -80,7 +123,7 @@ router.patch('/:id', async (req, res) => {
 });
 
 // Delete a product by id
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req: Request, res: Response) => {
   try {
     console.log('Deleting product...');
     const { id } = req.params;
@@ -95,7 +138,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Delete all products
-router.delete('/', async (req, res) => {
+router.delete('/', async (req: Request, res: Response) => {
   try {
     console.log('Deleting all products...');
     const products = await prisma.product.deleteMany();
