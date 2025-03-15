@@ -10,6 +10,7 @@ interface ProductRequest {
   description: string;
   imageUrl: string;
   stock: number;
+  categoryId: number;
 }
 
 type ProductRequestType = Request<{}, any, ProductRequest>;
@@ -30,13 +31,13 @@ router.get('/', async (req: Request, res: Response) => {
 router.post( '/', async (req: Request<{}, any, ProductRequest>, res: Response ) => {
   try {
     console.log('Creating a new product...', req.body);
-    const { name, price, description, imageUrl, stock } = req.body;
+    const { name, price, description, imageUrl, stock, categoryId } = req.body;
 
     // Validating the required fields
-    if (!name || !price || !description || !imageUrl || stock === undefined) {
+    if (!name || !price || !description || !imageUrl || stock === undefined || !categoryId) {
         res.status(400).json({ 
         error: 'Missing required fields',
-        required: ['name', 'price', 'description', 'imageUrl', 'stock'],
+        required: ['name', 'price', 'description', 'imageUrl', 'stock', 'categoryId'],
         received: req.body 
       });
       return;
@@ -48,14 +49,26 @@ router.post( '/', async (req: Request<{}, any, ProductRequest>, res: Response ) 
         error: 'Invalid data types',
         expected: {
           price: 'float',
-          stock: 'number'
+          stock: 'number',
+          categoryId: 'number'
         },
         received: {
           price: typeof price,
-          stock: typeof stock
+          stock: typeof stock,
+          categoryId: typeof categoryId
         }
       });
       return;
+    }
+
+    // Check if category exists
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId }
+    });
+
+    if (!category) {
+       res.status(400).json({ error: 'Category not found' });
+       return;
     }
 
     const product = await prisma.product.create({
@@ -64,8 +77,12 @@ router.post( '/', async (req: Request<{}, any, ProductRequest>, res: Response ) 
           price,
           description,
           imageUrl,
-          stock
+          stock,
+          categoryId
         },
+        include: {
+          category: true
+        }
     });
     res.status(201).json(product);
   } catch (error) {
