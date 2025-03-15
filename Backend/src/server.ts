@@ -3,6 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import userRoutes from './routes/userRoutes';
 import productRoutes from './routes/productRoutes';
+import orderRoutes from './routes/orderRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+import authRoutes from './routes/authRoutes';
 
 const app = express();
 const PORT:Number=3000;
